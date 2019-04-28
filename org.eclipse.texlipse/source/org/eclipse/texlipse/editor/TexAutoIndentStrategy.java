@@ -42,7 +42,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
     /** Indentation items which can be edited in Preference-Texlipse-Editor-Indentation*/
     private String[] indentationItems;
     private int lineLength;
-    private static boolean hardWrap = false;
+    private static boolean hardWrap = true;
     private boolean indent;
 
     private HardLineWrap hlw;
@@ -184,12 +184,13 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
         return false;
     }
     
-    /**
-     * Returns a string with the whitespaces (spaces and tabs) that are at the beginning
-     * of line
-     * @param line
-     * @return
-     */
+	/**
+	 * Returns a string with the whitespaces (spaces and tabs) that are at the
+	 * beginning of line
+	 * 
+	 * @param line
+	 * @return
+	 */
     public static String getIndentation(String line) {
         int offset = 0;
         while (offset < line.length() && (line.charAt(offset) == ' ' || line.charAt(offset) == '\t')) {
@@ -199,86 +200,100 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
     }
     
     /**
-     * Performs indentation after new line is detected.
-     * 
-     * @param document Document where new line is detected.
-     * @param command Command that represent the change of the document (new
-     *            line).
-     */
-    private void smartIndentAfterNewLine(IDocument document, DocumentCommand command) {
-        try {
-            itemSetted = false;
-            int commandOffset = command.offset;
-            int line = document.getLineOfOffset(commandOffset);
-            int lineOffset = document.getLineOffset(line);
-            String startLine = document.get(lineOffset, commandOffset - lineOffset);
-            //this is save
-            String lineDelimiter = document.getLegalLineDelimiters()
-                [TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text)];
-            int beginIndex;
-            if ((beginIndex = LatexParserUtils.findCommand(startLine, "\\begin", 0)) != -1) {
-                // test if line contains \begin and search the environment (itemize,
-                // table...)
-                IRegion r = LatexParserUtils.getCommandArgument(startLine, beginIndex);
-                if (r == null){
-                	//No environment found
-                    super.customizeDocumentCommand(document, command);
-                    return;
-                }
-                String envName = startLine.substring(r.getOffset(), r.getOffset()+r.getLength());
-                StringBuilder buf = new StringBuilder(command.text);
+	 * Performs indentation after new line is detected.
+	 * 
+	 * @param document Document where new line is detected.
+	 * @param command  Command that represent the change of the document (new line).
+	 */
+	private void smartIndentAfterNewLine(IDocument document, DocumentCommand command)
+	{
+		try
+		{
+			itemSetted = false;
+			int commandOffset = command.offset;
+			int line = document.getLineOfOffset(commandOffset);
+			int lineOffset = document.getLineOffset(line);
+			String startLine = document.get(lineOffset, commandOffset - lineOffset);
+			// this is save
+			String lineDelimiter = document.getLegalLineDelimiters()[TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text)];
+			int beginIndex;
+			if ((beginIndex = LatexParserUtils.findCommand(startLine, "\\begin", 0)) != -1)
+			{
+				// test if line contains \begin and search the environment (itemize,
+				// table...)
+				IRegion r = LatexParserUtils.getCommandArgument(startLine, beginIndex);
+				if (r == null)
+				{
+					// No environment found
+					super.customizeDocumentCommand(document, command);
+					return;
+				}
+				String envName = startLine.substring(r.getOffset(), r.getOffset() + r.getLength());
+				StringBuilder buf = new StringBuilder(command.text);
 
-                // get indentation of \begin
-/*                String prevIndentation = this.tools.getIndentation(document, line,
-                        "\\begin", this.tabWidth); // NEW*/
-                String prevIndentation = getIndentation(startLine);
-                
-                if (Arrays.binarySearch(this.indentationItems, envName) >= 0) {
-                    buf.append(prevIndentation);
-                    buf.append(this.indentationString);
-                } else {
-                    buf.append(prevIndentation);
-                }
-                
-                if (autoItem && (envName.equals("itemize") || envName.equals("enumerate"))) {
-                    buf.append("\\item ");
-                    itemSetted = true;
-                    itemAtLine = document.getLineOfOffset(command.offset);
-                } else if (autoItem && envName.equals("description")) {
-                    buf.append("\\item[]");
-                    itemSetted = true;
-                    itemAtLine = document.getLineOfOffset(command.offset);
-                }
+				// get indentation of \begin
+				/*
+				 * String prevIndentation = this.tools.getIndentation(document, line, "\\begin",
+				 * this.tabWidth); // NEW
+				 */
+				String prevIndentation = getIndentation(startLine);
 
-                command.caretOffset = command.offset + buf.length();
-                command.shiftsCaret = false;
-                if (autoItem && envName.equals("description")) {
-                    command.caretOffset--;
-                }
-                
-                /*
-                 * looks for the \begin-statement and inserts
-                 * an equivalent \end-statement (respects \begin-indentation)
-                 */
-                if (needsEnd(envName, document.get(), lineOffset)){
-                    buf.append(lineDelimiter);
-                    buf.append(prevIndentation);
-                    buf.append("\\end{" + envName + "}");
-                }
-                command.text = buf.toString();
-                
-            } else {
+				if (Arrays.binarySearch(this.indentationItems, envName) >= 0)
+				{
+					buf.append(prevIndentation);
+					buf.append(this.indentationString);
+				} else
+				{
+					buf.append(prevIndentation);
+				}
+
+				if (autoItem && (envName.equals("itemize") || envName.equals("enumerate")))
+				{
+					buf.append("\\item ");
+					itemSetted = true;
+					itemAtLine = document.getLineOfOffset(command.offset);
+				} else if (autoItem && envName.equals("description"))
+				{
+					buf.append("\\item[]");
+					itemSetted = true;
+					itemAtLine = document.getLineOfOffset(command.offset);
+				}
+
+				command.caretOffset = command.offset + buf.length();
+				command.shiftsCaret = false;
+				if (autoItem && envName.equals("description"))
+				{
+					command.caretOffset--;
+				}
+
+				/*
+				 * looks for the \begin-statement and inserts an equivalent \end-statement
+				 * (respects \begin-indentation)
+				 */
+				if (needsEnd(envName, document.get(), lineOffset))
+				{
+					buf.append(lineDelimiter);
+					buf.append(prevIndentation);
+					buf.append("\\end{" + envName + "}");
+				}
+				command.text = buf.toString();
+
+			} else
+			{
 //            	System.out.println(itemInserted(document, command));
-                if (autoItem && !itemInserted(document, command)) {
-                    super.customizeDocumentCommand(document, command);
-                } else {
-                    super.customizeDocumentCommand(document, command);
-                }
-            }
-        } catch (BadLocationException e) {
-            TexlipsePlugin.log("TexAutoIndentStrategy:SmartIndentAfterNewLine", e);
-        }
-    }
+				if (autoItem && !itemInserted(document, command))
+				{
+					super.customizeDocumentCommand(document, command);
+				} else
+				{
+					super.customizeDocumentCommand(document, command);
+				}
+			}
+		} catch (BadLocationException e)
+		{
+			TexlipsePlugin.log("TexAutoIndentStrategy:SmartIndentAfterNewLine", e);
+		}
+	}
     
     /**
      * Removes indentation if \end{...} is detected. We assume that 

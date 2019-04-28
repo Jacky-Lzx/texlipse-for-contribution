@@ -114,8 +114,7 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
      * @TODO
      * 	fix bugs
      */
-    @SuppressWarnings("unused")
-	private void doWrap(TexSelections selection) throws BadLocationException {
+	/*private void doWrap(TexSelections selection) throws BadLocationException {
         boolean itemFound = false;
         IDocument document = selection.getDocument();
         //selection.selectCompleteLines();
@@ -178,10 +177,10 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 
 				} else
 				{
-					/*
+					
 					 * a current line is a command, a comment or en empty -> do not handle the line
 					 * at this iteration.
-					 */
+					 
 					end = true;
 				}
 			}
@@ -189,13 +188,13 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 			selectedLine = temp.toString().trim();
 			while (selectedLine.length() > 0)
 			{
-				/* find the last white space before MAX */
+				 find the last white space before MAX 
 				wsLast = tools.getLastWSPosition(selectedLine, (MAX_LENGTH - correctIndentation.length())) + 1;
 				if (wsLast == 0)
 				{
-					/*
+					
 					 * there was no white space before MAX, try if there is one after
-					 */
+					 
 					wsLast = tools.getFirstWSPosition(selectedLine, (MAX_LENGTH - correctIndentation.length())) + 1;
 				}
 				if (wsLast == 0 || wsLast > selectedLine.length() || selectedLine.length() < (MAX_LENGTH - correctIndentation.length()))
@@ -215,12 +214,12 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 		document.replace(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength(), buff.toString());
 	}
     
-    /**
+    *//**
      * Checks if the command word is \begin{itemize} or \begin{enumerate}
      * @param txt	string to test
      * @return		<code>true</code> if txt contains \begin{itemize} or 
      * 				\begin{enumerate}, <code>false</code> otherwise
-     */
+     *//*
     private boolean isList(String txt){
         boolean rv = false;
         int bi = -1;
@@ -233,16 +232,14 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
                 rv = true;
         }
         return rv;
-    }
+    }*/
     
-    // testing
     /**
      * @edited lzx
      * 
      * @param selection
      * @throws BadLocationException
      */
-    @SuppressWarnings("unused")
 	private void doWrapB(TexSelections selection) throws BadLocationException 
     {
     	selection.selectParagraph();
@@ -346,6 +343,7 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 				{
 					newText.append(wrapper.loadWrapped(indentation));
 					newText.delete(newText.length() - delimiter.length(), newText.length());
+					newText.append(' ');
 					newText.append(inTextComment);
 					newText.append(delimiter);
 					forceWrap = false;
@@ -368,13 +366,10 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     	selection.selectParagraph();
     	String delimiter = tools.getLineDelimiter(selection.getDocument());
     	IDocument document = selection.getDocument();
-    	// FIXME complete selection just returns the current line
-    	//String[] lines = selection.getCompleteSelection().split(delimiter);
     	String[] lines = document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()).split(delimiter);
     	if (lines.length == 0) {
     		return;
     	}
-    	// FIXME doc.get
     	String endNewlines = tools.getNewlinesAtEnd(document.get(document.getLineOffset(selection.getStartLineIndex()), selection.getSelLength()), delimiter);
     	
     	TextWrapper wrapper = new TextWrapper(tools, delimiter);
@@ -421,7 +416,7 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     			
     			if (tools.isLineCommentLine(trimmedLine)) {
     				newIndentation = tools.getIndentationWithComment(lines[index]);
-    				trimmedLine = trimmedLine.substring(1).trim(); // FIXME remove all % signs
+    				trimmedLine = trimmedLine.substring(1).trim();
     			} else {
     				newIndentation = tools.getIndentation(lines[index], tabWidth);
     			}
