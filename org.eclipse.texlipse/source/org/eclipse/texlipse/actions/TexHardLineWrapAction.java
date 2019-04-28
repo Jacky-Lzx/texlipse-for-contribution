@@ -19,7 +19,6 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.texlipse.TexlipsePlugin;
-import org.eclipse.texlipse.editor.HardLineWrapTools;
 import org.eclipse.texlipse.editor.TexEditor;
 import org.eclipse.texlipse.editor.TexEditorTools;
 import org.eclipse.texlipse.properties.TexlipseProperties;
@@ -39,7 +38,6 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     private int tabWidth = 4;
     private int MAX_LENGTH = 80;
     private TexEditorTools tools;
-    private HardLineWrapTools hlwTools;
     //private static TexSelections selection;
     
     private static Set<String> environmentsToProcess = new HashSet<String>();
@@ -51,7 +49,6 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     
     public TexHardLineWrapAction() {
         this.tools = new TexEditorTools();
-        this.hlwTools = new HardLineWrapTools();
     }
 
 
@@ -314,9 +311,9 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 					newIndentation = tools.getIndentationWithComment(lines[index]);
 					trimmedLine = trimmedLine.substring(1).trim();
 				} 
-				else if (hlwTools.isCommentInLine(lines[index]))
+				else if (tools.isCommentInLine(lines[index]))
 				{
-					int commentCharPosition = hlwTools.getCommentCharPosition(trimmedLine);
+					int commentCharPosition = tools.getCommentCharPosition(trimmedLine);
 					inTextComment = trimmedLine.substring(commentCharPosition);
 					trimmedLine = trimmedLine.substring(0, commentCharPosition);
 					forceWrap = true;

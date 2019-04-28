@@ -438,14 +438,14 @@ public class HardLineWrap {
 					lineDif++;
 					newLineBuf.append(' ' + nextLine.trim());
 					c.length += nextLine.length();
-					if (getCommentCharPosition(nextLine) > 0)
+					if (tools.getCommentCharPosition(nextLine) > 0)
 						break;
 					nextLine = tools.getStringAt(d, c, false, lineDif);
 				}
 			}
 			
-			boolean isCommentInLine = getCommentCharPosition(newLineBuf.toString()) > 0;
-			int[] breakpos = getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
+			boolean isCommentInLine = tools.getCommentCharPosition(newLineBuf.toString()) > 0;
+			int[] breakpos = tools.getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, tools.getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
 			int length = 0;
 			for(int i = breakpos.length - 1; i >= 0; i--)
 			{
@@ -476,50 +476,4 @@ public class HardLineWrap {
 			TexlipsePlugin.log("Problem with hard line wrap", e);
 		}
 	}
-	
-	/**
-	 * Get the line break positions and return as int[]
-	 * 
-	 * @param originStr (containing indentation at the beginning)
-	 * @param MAX_LENGTH How many characters are allowed in one line
-	 * @return Positions that need to insert delimiter and indentation
-	 * 
-	 * @author lzx
-	 */
-	private static int[] getLineBreakPositions(String originStr, int MAX_LENGTH)
-	{
-		int length = originStr.length() / MAX_LENGTH + 1;
-		int[] breakPositions = new int[length];
-		breakPositions[0] = getLineBreakPosition(originStr, MAX_LENGTH);
-		for (int i = 1; i < length; i++)
-		{
-			String nextLine = originStr.substring(breakPositions[i - 1] + 1);
-			if (nextLine.length() < MAX_LENGTH) break;
-			int pos = getLineBreakPosition(nextLine, MAX_LENGTH);
-			breakPositions[i] = breakPositions[i - 1] + pos + 1;
-		}
-		return breakPositions;
-	}
-	
-	/**
-	 * It is supposed that input string only has one in-text comment.
-	 * Otherwise it returns the first '%' ("\%" exclusive) index.
-	 * 
-	 * @param str
-	 * @return index of single '%' ("\%" exclusive)
-	 * 
-	 * @author lzx
-	 */
-	private static int getCommentCharPosition(String str)
-	{
-		char[] ar = str.toCharArray();
-		int length = ar.length;
-		for (int i = 1; i < length; i++)
-		{
-			if(ar[i] == '%' && ar[i - 1] != '\\')
-				return i;
-		}
-		return -1;
-	}
-    
  }
