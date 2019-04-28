@@ -266,6 +266,9 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     	String indentation = tools.getIndentation(lines[0], tabWidth);
     	String newIndentation;
     	
+    	String inTextComment = "";
+    	boolean forceWrap = false;
+    	
     	StringBuffer newText = new StringBuffer();
 		for (int index = 0; index < lines.length; index++)
 		{
@@ -309,18 +312,15 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 				if (tools.isLineCommentLine(trimmedLine))
 				{
 					newIndentation = tools.getIndentationWithComment(lines[index]);
-					trimmedLine = trimmedLine.substring(1).trim(); // FIXME remove all % signs
+					trimmedLine = trimmedLine.substring(1).trim();
 				} 
 				else if (hlwTools.isCommentInLine(lines[index]))
 				{
 					int commentCharPosition = hlwTools.getCommentCharPosition(trimmedLine);
-					String inTextComment = trimmedLine.substring(commentCharPosition);
-					wrapper.storeUnwrapped(trimmedLine.substring(0, commentCharPosition));
-					newText.append(wrapper.loadWrapped(indentation));
-					newText.delete(newText.length() - delimiter.length(), newText.length());
-					newText.append(inTextComment);
-					newText.append(delimiter);
-					continue;
+					inTextComment = trimmedLine.substring(commentCharPosition);
+					trimmedLine = trimmedLine.substring(0, commentCharPosition);
+					forceWrap = true;
+					newIndentation = tools.getIndentation(lines[index], tabWidth);
 				}
 				else
 				{
@@ -343,6 +343,16 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 				{
 					// On forced breaks, end of sentence or enumerations keep existing breaks
 					newText.append(wrapper.loadWrapped(indentation));
+				}
+				
+				if (forceWrap)
+				{
+					newText.append(wrapper.loadWrapped(indentation));
+					newText.delete(newText.length() - delimiter.length(), newText.length());
+					newText.append(inTextComment);
+					newText.append(delimiter);
+					forceWrap = false;
+					inTextComment = "";
 				}
 			}
 		}
