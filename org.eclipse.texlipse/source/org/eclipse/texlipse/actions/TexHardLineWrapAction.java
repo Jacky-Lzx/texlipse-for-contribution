@@ -42,7 +42,8 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
     
     private static Set<String> environmentsToProcess = new HashSet<String>();
     
-    static {
+    static 
+    {
         environmentsToProcess.add("document");
     }
     
@@ -587,27 +588,32 @@ public class TexHardLineWrapAction implements IEditorActionDelegate {
 	
 	
 	// Used in doWrapB()
-    private class TextWrapper {
-    
-        private StringBuffer tempBuf = new StringBuffer();
-        private TexEditorTools tools;
-        private String delimiter;
-        
-        TextWrapper(TexEditorTools tet, String delim) {
-            this.tools = tet;
-            this.delimiter = delim;
-        }
-        
-        private void storeUnwrapped(String s) {
-            tempBuf.append(s);
-            tempBuf.append(" ");
-        }
-        
-        private String loadWrapped(String indentation) {
+	private class TextWrapper
+	{
+
+		private StringBuffer	tempBuf	= new StringBuffer();
+		private TexEditorTools	tools;
+		private String			delimiter;
+
+		TextWrapper(TexEditorTools tet, String delim)
+		{
+			this.tools = tet;
+			this.delimiter = delim;
+		}
+
+		private void storeUnwrapped(String s)
+		{
+			tempBuf.append(s);
+			tempBuf.append(" ");
+		}
+
+		private String loadWrapped(String indentation)
+		{
 			String wrapped = tools.wrapWordString(tempBuf.toString(), indentation, MAX_LENGTH, delimiter);
-            tempBuf = new StringBuffer();
-            return wrapped;
-        }
-    }
-    
+			
+			tempBuf = new StringBuffer();
+			return wrapped;
+		}
+	}
+
 }

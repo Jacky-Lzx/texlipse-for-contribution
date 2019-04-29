@@ -20,8 +20,6 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentExtension3;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.TextUtilities;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.texlipse.TexlipsePlugin;
 import org.eclipse.texlipse.editor.partitioner.FastLaTeXPartitionScanner;
 import org.eclipse.texlipse.properties.TexlipseProperties;
@@ -35,6 +33,14 @@ import org.eclipse.texlipse.texparser.LatexParserUtils;
  * @author Antti Pirinen
  * @author Oskar Ojala
  * @author Boris von Loesch
+ */
+/**
+ * TODO In the environment of {itemize}, every time a new line begins, "\item " should be inserted.
+ * TODO If an item is too long that it needs to be wrapped into multiple lines, the lines should be indented.
+ * TODO When deleting something, the related lines should be wrapped.
+ * 
+ * @author lzx
+ *
  */
 public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
     
@@ -56,101 +62,114 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
      * 
      * @param store
      */
-    public TexAutoIndentStrategy() {
-        fPreferenceStore = TexlipsePlugin.getDefault().getPreferenceStore();
-        
-        fPreferenceStore.addPropertyChangeListener(new IPropertyChangeListener() {
-            
-            public void propertyChange(PropertyChangeEvent event) {
-                
-                String ev = event.getProperty();
-                if (TexlipseProperties.WORDWRAP_LENGTH.equals(ev)) {
-                    lineLength = fPreferenceStore.getInt(TexlipseProperties.WORDWRAP_LENGTH);
-                }
-                else if (TexlipseProperties.TEX_ITEM_COMPLETION.equals(ev)) {
-                    autoItem = fPreferenceStore.getBoolean(TexlipseProperties.TEX_ITEM_COMPLETION);
-                }
-                else if (TexlipseProperties.INDENTATION_LEVEL.equals(ev)
-                        || TexlipseProperties.INDENTATION_TABS.equals(ev)
-                        || TexlipseProperties.INDENTATION.equals(ev)
-                        || TexlipseProperties.INDENTATION_ENVS.equals(ev)) {
-                    setIndetationPreferenceInfo();
-                }
-            };
-            
-        });
-        this.hlw = new HardLineWrap();
-        setIndetationPreferenceInfo();
+	public TexAutoIndentStrategy()
+	{
+		fPreferenceStore = TexlipsePlugin.getDefault().getPreferenceStore();
+		
+		fPreferenceStore.addPropertyChangeListener(event -> {
+			String ev = event.getProperty();
+			if (TexlipseProperties.WORDWRAP_LENGTH.equals(ev))
+				lineLength = fPreferenceStore.getInt(TexlipseProperties.WORDWRAP_LENGTH);
+			else if (TexlipseProperties.TEX_ITEM_COMPLETION.equals(ev))
+				autoItem = fPreferenceStore.getBoolean(TexlipseProperties.TEX_ITEM_COMPLETION);
+			else if (TexlipseProperties.INDENTATION_LEVEL.equals(ev) || TexlipseProperties.INDENTATION_TABS.equals(ev) || TexlipseProperties.INDENTATION.equals(ev) || TexlipseProperties.INDENTATION_ENVS.equals(ev))
+				setIndetationPreferenceInfo();
+		});
+		this.hlw = new HardLineWrap();
+		setIndetationPreferenceInfo();
     }
     
     /**
-     * Returns a default indentation string, 
-     * that is created according to the preferences
-     * @return string consists of tabs or spaces
-     */
-    public static String getIndentationString() {
-        String indentationString = "";
-        if (TexlipsePlugin.getDefault().getPreferenceStore().getBoolean(TexlipseProperties.INDENTATION_TABS)) {
-            indentationString = "\t";
-        } else {
-        	int indentationLevel = TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.INDENTATION_LEVEL);
-        	//TODO: Efficient?
-        	for (int i = 0; i < indentationLevel; i++) {
-                indentationString += " ";
-            }
-        }
-        return indentationString;
-    }
+	 * Returns a default indentation string, that is created according to the
+	 * preferences
+	 * 
+	 * @return string consists of tabs or spaces
+	 */
+	public static String getIndentationString()
+	{
+		String indentationString = "";
+		if (TexlipsePlugin.getDefault().getPreferenceStore().getBoolean(TexlipseProperties.INDENTATION_TABS))
+			indentationString = "\t";
+		else
+		{
+			int indentationLevel = TexlipsePlugin.getDefault().getPreferenceStore().getInt(TexlipseProperties.INDENTATION_LEVEL);
+			for (int i = 0; i < indentationLevel; i++)
+				indentationString += " ";
+		}
+		return indentationString;
+	}
     
     
     /**
      * Initializes indentation information from preferences
      */
-    private void setIndetationPreferenceInfo() {
-        indentationItems = TexlipsePlugin.getPreferenceArray(TexlipseProperties.INDENTATION_ENVS);
-        Arrays.sort(indentationItems);
+	private void setIndetationPreferenceInfo()
+	{
+		indentationItems = TexlipsePlugin.getPreferenceArray(TexlipseProperties.INDENTATION_ENVS);
+		Arrays.sort(indentationItems);
 
-        //tabWidth = editorPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
-        
-        indentationString = getIndentationString();
-        
-        indent = Boolean.parseBoolean(TexlipsePlugin.getPreference(TexlipseProperties.INDENTATION));
-        lineLength = fPreferenceStore.getInt(TexlipseProperties.WORDWRAP_LENGTH);
-        autoItem = fPreferenceStore.getBoolean(TexlipseProperties.TEX_ITEM_COMPLETION);
-    }
-    
+		// tabWidth =
+		// editorPreferenceStore.getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
+
+		indentationString = getIndentationString();
+
+		indent = Boolean.parseBoolean(TexlipsePlugin.getPreference(TexlipseProperties.INDENTATION));
+		lineLength = fPreferenceStore.getInt(TexlipseProperties.WORDWRAP_LENGTH);
+		autoItem = fPreferenceStore.getBoolean(TexlipseProperties.TEX_ITEM_COMPLETION);
+	}
+
     /*
-     * (non-Javadoc) Method declared on IAutoIndentStrategy
-     */
-    public void customizeDocumentCommand(IDocument document, DocumentCommand command) {
-        if (this.indent) {
-            if (itemSetted && autoItem && command.length == 0 && command.text != null
-                    && TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text) != -1) {
-                dropItem(document, command);
-            } else if (command.length == 0 && command.text != null
-                    &&  TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text) != -1) {
-                smartIndentAfterNewLine(document, command);
-            } else if ("}".equals(command.text)) {
-                smartIndentAfterBrace(document, command);
-            } else {
-                itemSetted = false;
-            }
-        }
+	 * (non-Javadoc) Method declared on IAutoIndentStrategy
+	 * 
+	 */
+	public void customizeDocumentCommand(IDocument document, DocumentCommand command)
+	{
+		/**
+		 * @Notes:
+		 * 	@delete: 	command.caretOffset = -1
+		 * 				command.shiftsCaret = true
+		 * 				when deleting n character(s), command.length = n
+		 * 				when deleting delimiter, command.length = delimiter.length()
+		 * 
+		 * 	@add: 		command.caretOffset = -1
+		 * 				command.shiftsCaret = true
+		 * 				when adding 1 character, command.length = 0
+		 * 				when copying more than 1 character, comamnd.length = 0
+		 */
+		if (this.indent)
+		{
+			//command.text = "\r\n"
+			/*if (itemSetted && autoItem && command.length == 0 && command.text != null && TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text) != -1)
+				dropItem(document, command);
+			else */if (command.length == 0 && command.text != null && TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text) != -1)
+				smartIndentAfterNewLine(document, command);
+			else if ("}".equals(command.text))
+				smartIndentAfterBrace(document, command);
+			else
+				itemSetted = false;
+		}
 
-        if (TexAutoIndentStrategy.hardWrap && command.length == 0 && command.text != null) {
-            try {
-                final String contentType = ((IDocumentExtension3) document).getContentType(
-                        TexEditor.TEX_PARTITIONING, command.offset, true);
-                // Do not wrap in verbatim partitions
-                if (!FastLaTeXPartitionScanner.TEX_VERBATIM.equals(contentType)) {
-                    hlw.doWrapD(document, command, lineLength);
-                }
-            }
-            catch (Exception e) {
-                // If we cannot retrieve the current content type, do not break lines
-            }
-        }
-    }
+		if (TexAutoIndentStrategy.hardWrap && command.length == 0 && command.text != null)
+		{
+			try
+			{
+				final String contentType = ((IDocumentExtension3) document).getContentType(TexEditor.TEX_PARTITIONING, command.offset, true);
+				// Do not wrap in verbatim partitions
+				if (!FastLaTeXPartitionScanner.TEX_VERBATIM.equals(contentType))
+					hlw.doWrapD(document, command, lineLength);
+			} 
+			catch (Exception e)
+			{
+				// If we cannot retrieve the current content type, do not break lines
+			}
+		}
+		
+//	command.length = 0;
+//		command.caretOffset = 366;
+//		command.shiftsCaret = false;
+		
+		
+	}
     
     
     /**
@@ -334,6 +353,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
             	command.length = commandOffset - lineOffset;
             	command.offset = lineOffset;
             } else {
+            	//TODO See what this function does
             	super.customizeDocumentCommand(document, command);
             }
             
@@ -374,7 +394,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
      *         otherwise
      *         
      *TODO: Bug: If having inserted /item after an enter, and then input enter again, no /item will be inserted.
-     *@author lzx
+     *@Edited lzx
      */
     private boolean itemInserted(IDocument d, DocumentCommand c) {
         itemSetted = false;
