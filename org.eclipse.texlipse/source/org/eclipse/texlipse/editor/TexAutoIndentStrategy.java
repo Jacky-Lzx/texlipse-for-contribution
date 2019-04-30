@@ -35,10 +35,10 @@ import org.eclipse.texlipse.texparser.LatexParserUtils;
  * @author Boris von Loesch
  */
 /**
- * TODO In the environment of {itemize}, every time a new line begins, "\item " should be inserted.
+ * Done: In the environment of {itemize}, every time a new line begins, "\item " should be inserted.
  * TODO If an item is too long that it needs to be wrapped into multiple lines, the lines should be indented.
  * TODO When deleting something, the related lines should be wrapped.
- * TODO Perfect indentation.
+ * Done: Perfect indentation.
  * 
  * @author lzx
  *
@@ -54,8 +54,8 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 
     private HardLineWrap hlw;
     private boolean autoItem = true;
-    private boolean itemSetted = false;
-    private int itemAtLine = 0;
+//    private boolean itemSetted = false;
+//    private int itemAtLine = 0;
     final private IPreferenceStore fPreferenceStore;
     
     private TexEditorTools tools = new TexEditorTools();
@@ -148,8 +148,8 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 				smartIndentAfterNewLine2(document, command);
 			else if ("}".equals(command.text))
 				smartIndentAfterBrace(document, command);
-			else
-				itemSetted = false;
+			/*else
+				itemSetted = false;*/
 		}
 
 		if (TexAutoIndentStrategy.hardWrap && command.length == 0 && command.text != null)
@@ -227,11 +227,11 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 	 * @param document Document where new line is detected.
 	 * @param command  Command that represent the change of the document (new line).
 	 */
-	private void smartIndentAfterNewLine(IDocument document, DocumentCommand command)
+	/*private void smartIndentAfterNewLine(IDocument document, DocumentCommand command)
 	{
 		try
 		{
-			itemSetted = false;
+//			itemSetted = false;
 			int commandOffset = command.offset;
 			int line = document.getLineOfOffset(commandOffset);
 			int lineOffset = document.getLineOffset(line);
@@ -253,10 +253,10 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 				StringBuilder buf = new StringBuilder(command.text);
 
 				// get indentation of \begin
-				/*
+				
 				 * String prevIndentation = this.tools.getIndentation(document, line, "\\begin",
 				 * this.tabWidth); // NEW
-				 */
+				 
 				String prevIndentation = getIndentation(startLine);
 
 				if (Arrays.binarySearch(this.indentationItems, envName) >= 0)
@@ -287,10 +287,10 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 					command.caretOffset--;
 				}
 
-				/*
+				
 				 * looks for the \begin-statement and inserts an equivalent \end-statement
 				 * (respects \begin-indentation)
-				 */
+				 
 				if (needsEnd(envName, document.get(), lineOffset))
 				{
 					buf.append(lineDelimiter);
@@ -315,7 +315,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 		{
 			TexlipsePlugin.log("TexAutoIndentStrategy:SmartIndentAfterNewLine", e);
 		}
-	}
+	}*/
     
 	/**
 	 * @author lzx
@@ -332,47 +332,67 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 			
 			String lineDelimiter = document.getLegalLineDelimiters()[TextUtilities.endsWith(document.getLegalLineDelimiters(), command.text)];
 			
+			boolean insertEnd = originalLine.trim().startsWith("\\begin");
 			int lineDif = 0;
-			String preIndentation;
+			//TODO Initialize
+			String preIndentation = "";
 			String[] commands = {"\\begin", "\\section", "\\subsection", "\\subsubsection"};
 			String envName = "";
-			while (true)
+			
+			/**
+			 * When backward research finds a "\\end", count--; when finds a "\\start", count++;
+			 * Used to get the correct indentation.
+			 * 
+			 */
+			int count = 0;
+			while (lineDif >= -lineNumber)
 			{
 				String line = tools.getStringAt(document, command, false, lineDif);
-				if (TextUtilities.startsWith(commands, line.trim()) != -1)
+				if (line.trim().startsWith("\\end"))
+					count--;
+				else if (TextUtilities.startsWith(commands, line.trim()) != -1)
 				{
-					int beginIndex = LatexParserUtils.findCommand(line, "\\begin", 0);
-					if (beginIndex != -1)
+					if (count == 0)
 					{
-						IRegion r = LatexParserUtils.getCommandArgument(line, beginIndex);
-						if (r == null)
-						{
-							// No environment found
-							super.customizeDocumentCommand(document, command);
-							return;
-						}
-						envName = line.substring(r.getOffset(), r.getOffset() + r.getLength());
 						
+						int beginIndex = LatexParserUtils.findCommand(line, "\\begin", 0);
+						if (beginIndex != -1)
+						{
+							IRegion r = LatexParserUtils.getCommandArgument(line, beginIndex);
+							if (r == null)
+							{
+								// No environment found
+								super.customizeDocumentCommand(document, command);
+								return;
+							}
+							envName = line.substring(r.getOffset(), r.getOffset() + r.getLength());
+							
+						}
+						//record the indentation
+						preIndentation = tools.getIndentation(line);
+						break;
 					}
-					//record the indentation
-					preIndentation = tools.getIndentation(line);
-					break;
+					else 
+						count++;
 				}
 				lineDif--;
 			}
+			boolean noIndent = false;
+			if (lineDif == -lineNumber - 1) noIndent = true;
+			
 			StringBuffer buf = new StringBuffer(command.text);
 			buf.append(preIndentation);
-			buf.append(this.indentationString);
+			buf.append(noIndent ? "" : this.indentationString);
 			if (autoItem && (envName.equals("itemize") || envName.equals("enumerate")))
 			{
 				buf.append("\\item ");
-				itemSetted = true;
-				itemAtLine = document.getLineOfOffset(command.offset);
+				/*itemSetted = true;
+				itemAtLine = document.getLineOfOffset(command.offset);*/
 			} else if (autoItem && envName.equals("description"))
 			{
 				buf.append("\\item[]");
-				itemSetted = true;
-				itemAtLine = document.getLineOfOffset(command.offset);
+				/*itemSetted = true;
+				itemAtLine = document.getLineOfOffset(command.offset);*/
 			}
 			
 			command.caretOffset = command.offset + buf.length();
@@ -386,7 +406,8 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 			 * looks for the \begin-statement and inserts an equivalent \end-statement
 			 * (respects \begin-indentation)
 			 */
-			if (needsEnd(envName, document.get(), lineOffset))
+			//TODO check if it has end in the document
+			if (insertEnd && needsEnd(envName, document.get(), lineOffset))
 			{
 				buf.append(lineDelimiter);
 				buf.append(preIndentation);
@@ -481,15 +502,15 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
      *TODO: Bug: If having inserted /item after an enter, and then input enter again, no /item will be inserted.
      *@Edited lzx
      */
-    private boolean itemInserted(IDocument d, DocumentCommand c) {
-        itemSetted = false;
+    /*private boolean itemInserted(IDocument d, DocumentCommand c) {
+//        itemSetted = false;
         try {
         	//lineNr starts from 0
             int lineNr = d.getLineOfOffset(c.offset);
             int lineEnd = d.getLineOffset(lineNr) + d.getLineLength(lineNr);
-            /*System.out.println("lineNr:" + lineNr);
+            System.out.println("lineNr:" + lineNr);
             System.out.println("lineEnd:" + lineEnd);
-            System.out.println("c.offset:" + c.offset);*/
+            System.out.println("c.offset:" + c.offset);
             //Test if there is no text behind the cursor in the line
             if (c.offset < lineEnd - 1) return false;
             
@@ -530,9 +551,10 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
         	//Ignore
         }
         return false;
-    }
+    }*/
 
     public static void setHardWrap(boolean hardWrap) {
         TexAutoIndentStrategy.hardWrap = hardWrap;
     }
+    
 }
