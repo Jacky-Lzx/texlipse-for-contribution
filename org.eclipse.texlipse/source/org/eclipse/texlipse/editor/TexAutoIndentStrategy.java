@@ -342,6 +342,7 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 			int lineDif = 0;
 			//TODO Initialize
 			String preIndentation = "";
+			/** Where commands are stored that will need one-tab indentation when starting a new line */
 			String[] commands = {"\\begin", "\\section", "\\subsection", "\\subsubsection"};
 			String envName = "";
 			
@@ -412,7 +413,6 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 			 * looks for the \begin-statement and inserts an equivalent \end-statement
 			 * (respects \begin-indentation)
 			 */
-			//TODO check if it has end in the document
 			if (insertEnd && needsEnd(envName, document.get(), lineOffset))
 			{
 				buf.append(lineDelimiter);

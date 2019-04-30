@@ -719,7 +719,7 @@ public class TexEditorTools {
 	 * 
 	 * @author lzx
 	 */
-	public int[] getLineBreakPositions(String originStr, int MAX_LENGTH)
+	public int[] getLineBreakPositions(String originStr, int MAX_LENGTH, int indentationLength)
 	{
 		int length = originStr.length() / MAX_LENGTH + 1;
 		int[] breakPositions = new int[length];
@@ -728,7 +728,7 @@ public class TexEditorTools {
 		{
 			String nextLine = originStr.substring(breakPositions[i - 1] + 1);
 			if (nextLine.length() < MAX_LENGTH) break;
-			int pos = getLineBreakPosition(nextLine, MAX_LENGTH);
+			int pos = getLineBreakPosition(nextLine, MAX_LENGTH - indentationLength);
 			breakPositions[i] = breakPositions[i - 1] + pos + 1;
 		}
 		return breakPositions;

@@ -106,7 +106,7 @@ public class HardLineWrap {
 		String trimmedLine = trimBegin(line);
 		if (trimmedLine.startsWith("%"))
 			return true;
-		// The line starts with "\%" is not a sigle line
+		// The line starts with "\%" is not a single line
 		if (trimmedLine.startsWith("\\") && !trimmedLine.startsWith("\\%"))
 			return true; // e.g. \\ or \[ 
 		if (trimmedLine.startsWith("\\item"))
@@ -445,7 +445,7 @@ public class HardLineWrap {
 			}
 			
 			boolean isCommentInLine = tools.getCommentCharPosition(newLineBuf.toString()) > 0;
-			int[] breakpos = tools.getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, tools.getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
+			int[] breakpos = tools.getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, tools.getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH, tools.getIndentation(line).length());
 			int length = 0;
 			for(int i = breakpos.length - 1; i >= 0; i--)
 			{
@@ -487,15 +487,17 @@ public class HardLineWrap {
 			final int cursorOnLine = c.offset - commandRegion.getOffset();
 			
 			//Do the delete process
-			line = line.substring(0, cursorOnLine - c.length) + line.substring(cursorOnLine);
+			line = line.substring(0, cursorOnLine) + line.substring(cursorOnLine + c.length);
 			
 			
 			String trimmedNextLine = tools.getStringAt(d, c, false, 1).trim();
 			String firstWordOfNextLine = trimmedNextLine.substring(0, trimmedNextLine.indexOf(' '));
 			
-			if (tools.isSingleLine(trimmedNextLine))
+			if (tools.getCommentCharPosition(line) > 0)
 				return;
-			if (line.length() + firstWordOfNextLine.length() > MAX_LENGTH)
+			else if (isSingleLine(trimmedNextLine))
+				return;
+			else if (line.length() + firstWordOfNextLine.length() > MAX_LENGTH)
 				return;
 
 			/**
@@ -561,7 +563,7 @@ public class HardLineWrap {
 			}
 			
 			boolean isCommentInLine = tools.getCommentCharPosition(newLineBuf.toString()) > 0;
-			int[] breakpos = tools.getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, tools.getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
+			int[] breakpos = tools.getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, tools.getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH, tools.getIndentation(line).length());
 			int length = 0;
 			for(int i = breakpos.length - 1; i >= 0; i--)
 			{
@@ -582,12 +584,14 @@ public class HardLineWrap {
 					newLineBuf.replace(commentCharIndex - (delim + tools.getIndentation(line) + (isCommentLine? "% " : "")).length(), commentCharIndex, " ");
 				}
 			}
+//			newLineBuf.append(delim);
 			
 			if (!isLastLine)
 			{
 				c.length += delim.length() * lineDif;
 				c.length -= 2;
-				if (nextLine.length() == 0) c.length += 1;
+				if (nextLine.length() == 0) 
+					c.length += 1;
 			}
 			
 			if (cursorOnLine >= breakpos[0])
