@@ -152,14 +152,20 @@ public class TexAutoIndentStrategy extends DefaultIndentLineAutoEditStrategy {
 				itemSetted = false;*/
 		}
 
-		if (TexAutoIndentStrategy.hardWrap && command.length == 0 && command.text != null)
+		if (TexAutoIndentStrategy.hardWrap /*&& command.length == 0 */&& command.text != null)
 		{
 			try
 			{
 				final String contentType = ((IDocumentExtension3) document).getContentType(TexEditor.TEX_PARTITIONING, command.offset, true);
 				// Do not wrap in verbatim partitions
 				if (!FastLaTeXPartitionScanner.TEX_VERBATIM.equals(contentType))
-					hlw.doWrapD(document, command, lineLength);
+				{
+					if (command.length == 0)
+						hlw.doWrapD(document, command, lineLength);
+					else 
+						hlw.doWrapWhenDeleting(document, command, lineLength);
+				}
+					
 			} 
 			catch (Exception e)
 			{

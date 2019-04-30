@@ -125,7 +125,7 @@ public class HardLineWrap {
      * @param MAX_LENGTH
      * @return -1 if not found
      */
-    private static int getLineBreakPosition(String line, int MAX_LENGTH) {
+    /*private static int getLineBreakPosition(String line, int MAX_LENGTH) {
     	int offset = 0;
     	//Ignore indentation
     	while (offset < line.length() && (line.charAt(offset) == ' ' || line.charAt(offset) == '\t')) {
@@ -141,7 +141,7 @@ public class HardLineWrap {
     		offset++;
     	}
     	return breakOffset;
-    }
+    }*/
     /**
      * New line wrapping strategy.    
      * The actual wrapping method. Based on the <code>IDocument d</code>
@@ -472,8 +472,132 @@ public class HardLineWrap {
 		}
 		catch(BadLocationException e)
 		{
-			System.out.println("Error");
 			TexlipsePlugin.log("Problem with hard line wrap", e);
 		}
 	}
- }
+ 
+	public void doWrapWhenDeleting(IDocument d, DocumentCommand c, int MAX_LENGTH)
+	{
+		try
+		{
+			IRegion commandRegion = d.getLineInformationOfOffset(c.offset);
+			/** the content of current line before inserting <code>c.text</code> */
+			String line = d.get(commandRegion.getOffset(), commandRegion.getLength());
+			
+			final int cursorOnLine = c.offset - commandRegion.getOffset();
+			
+			//Do the delete process
+			line = line.substring(0, cursorOnLine - c.length) + line.substring(cursorOnLine);
+			
+			
+			String trimmedNextLine = tools.getStringAt(d, c, false, 1).trim();
+			String firstWordOfNextLine = trimmedNextLine.substring(0, trimmedNextLine.indexOf(' '));
+			
+			if (tools.isSingleLine(trimmedNextLine))
+				return;
+			if (line.length() + firstWordOfNextLine.length() > MAX_LENGTH)
+				return;
+
+			/**
+			 * @bug
+			 * There is a bug that when copy a long paragraph into the document and then input char, the cursor offset is not correct.
+			 * <p>But the first thing after copying should be force hard line(Esc, q), so this bug needn't be solved.
+			 */
+			//set the location of cursor after merge
+			c.shiftsCaret = false;
+			c.caretOffset = c.offset + c.text.length();
+			
+			
+			StringBuffer newLineBuf = new StringBuffer();
+			newLineBuf.append(line);
+
+			
+			int lineNr = d.getLineOfOffset(c.offset);
+			
+			String delim = d.getLineDelimiter(lineNr);
+			boolean isLastLine = false;
+			if (delim == null)
+			{
+				// This is the last line in the document
+				isLastLine = true;
+				if (lineNr > 0)
+					delim = d.getLineDelimiter(lineNr - 1);
+				else
+				{
+					// Last chance
+					delim = d.getLegalLineDelimiters()[0];
+					System.out.println("Error: you are not supposed to be here.");
+				}
+			}
+			
+			c.length = line.length() + 1;
+			c.offset = commandRegion.getOffset();
+			
+			int lineDif = 1;
+			String nextLine = tools.getStringAt(d, c, false, 1);
+			
+			boolean isCommentLine = trimBegin(line).startsWith("%");
+			if (isCommentLine)
+			{
+				while(nextLine != "" && trimBegin(nextLine).startsWith("%"))
+				{
+					lineDif++;
+					newLineBuf.append(' ' + trimBeginPlusComment(nextLine).trim());
+					c.length += nextLine.length();
+					nextLine = tools.getStringAt(d, c, false, lineDif);
+				}
+			}
+			else
+			{
+				while (nextLine != "" && !isSingleLine(nextLine))
+				{
+					lineDif++;
+					newLineBuf.append(' ' + nextLine.trim());
+					c.length += nextLine.length();
+					if (tools.getCommentCharPosition(nextLine) > 0)
+						break;
+					nextLine = tools.getStringAt(d, c, false, lineDif);
+				}
+			}
+			
+			boolean isCommentInLine = tools.getCommentCharPosition(newLineBuf.toString()) > 0;
+			int[] breakpos = tools.getLineBreakPositions(isCommentInLine? newLineBuf.substring(0, tools.getCommentCharPosition(newLineBuf.toString())) : newLineBuf.toString(), MAX_LENGTH);
+			int length = 0;
+			for(int i = breakpos.length - 1; i >= 0; i--)
+			{
+				if (breakpos[i] != 0)
+				{
+					length = i;
+					break;
+				}
+			}
+			for (int i = length; i >= 0; i--)
+				newLineBuf.replace(breakpos[i], breakpos[i] + 1, delim + tools.getIndentation(line) + (isCommentLine? "% " : ""));
+			
+			if (isCommentInLine)
+			{
+				int commentCharIndex = newLineBuf.lastIndexOf("%");
+				if (newLineBuf.substring(0, commentCharIndex).endsWith(delim + tools.getIndentation(line) + (isCommentLine? "% " : "")))
+				{
+					newLineBuf.replace(commentCharIndex - (delim + tools.getIndentation(line) + (isCommentLine? "% " : "")).length(), commentCharIndex, " ");
+				}
+			}
+			
+			if (!isLastLine)
+			{
+				c.length += delim.length() * lineDif;
+				c.length -= 2;
+				if (nextLine.length() == 0) c.length += 1;
+			}
+			
+			if (cursorOnLine >= breakpos[0])
+				c.caretOffset += tools.getIndentation(line).length() + 1 + (isCommentLine ? 2: 0);
+			c.text = newLineBuf.toString();
+			
+		}
+		catch(BadLocationException e)
+		{
+			TexlipsePlugin.log("Problem with hard line wrap", e);
+		}
+	}
+}
