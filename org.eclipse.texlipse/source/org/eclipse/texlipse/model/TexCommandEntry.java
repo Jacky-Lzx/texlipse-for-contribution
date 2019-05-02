@@ -130,7 +130,7 @@ public class TexCommandEntry extends AbstractEntry {
     }
 
     /**
-     * Copy construktor
+     * Copy constructor
      * 
      * @param c
      */

@@ -17,14 +17,14 @@ import org.eclipse.jface.text.Position;
  * in LaTeX file, eg. command definitions or reference declarations.
  * 
  * This is essentially handled somewhat like a struct in C, due to
- * efficiency resons.
+ * efficiency reasons.
  * 
  * @author Oskar Ojala
  */
 public abstract class AbstractEntry implements Comparable {
 
     /**
-     * The key (ie. the name) of the entry
+     * The key (i.e. the name) of the entry
      */
     public String key;
     /**

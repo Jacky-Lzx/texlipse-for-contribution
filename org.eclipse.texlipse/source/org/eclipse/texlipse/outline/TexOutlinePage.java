@@ -13,7 +13,6 @@ package org.eclipse.texlipse.outline;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -120,7 +119,7 @@ public class TexOutlinePage extends ContentOutlinePage {
     }  
     
     /**
-     * Creates the control ie. creates all the stuff that matters and
+     * Creates the control i.e. creates all the stuff that matters and
      * is visible in the outline. 
      * 
      * Actions must be created before menus and toolbars.

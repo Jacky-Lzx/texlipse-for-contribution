@@ -37,7 +37,7 @@ import org.eclipse.texlipse.texparser.LatexParserUtils;
 /**
  * Done: In the environment of {itemize}, every time a new line begins, "\item " should be inserted.
  * TODO If an item is too long that it needs to be wrapped into multiple lines, the lines should be indented.
- * TODO When deleting something, the related lines should be wrapped.
+ * Done: When deleting something, the related lines should be wrapped.
  * Done: Perfect indentation.
  * 
  * @author lzx

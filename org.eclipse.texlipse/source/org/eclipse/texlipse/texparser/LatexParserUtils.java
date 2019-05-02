@@ -36,15 +36,19 @@ public class LatexParserUtils {
      * @param index
      * @return
      */
-    public static boolean isEscaped (String input, int index) {
-        while (index > 0) {
-            index--;
-            if (input.charAt(index) != '\\') return false;
-            else if (index == 0 || input.charAt(index - 1) != '\\') return true;
-            index--;
-        }
-        return false;
-    }
+	public static boolean isEscaped(String input, int index)
+	{
+		while (index > 0)
+		{
+			index--;
+			if (input.charAt(index) != '\\')
+				return false;
+			else if (index == 0 || input.charAt(index - 1) != '\\')
+				return true;
+			index--;
+		}
+		return false;
+	}
     
     /**
      * Returns the index of the first character of the line

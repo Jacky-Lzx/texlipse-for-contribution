@@ -25,7 +25,7 @@ import org.eclipse.texlipse.TexlipsePlugin;
 
 
 /**
- * A class for handling (tex)template completitions.
+ * A class for handling (tex)template completions.
  * 
  * @author Esa Seuranen
  * @author Oskar Ojala
