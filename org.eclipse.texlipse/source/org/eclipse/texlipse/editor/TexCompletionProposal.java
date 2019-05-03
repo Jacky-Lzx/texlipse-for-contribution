@@ -12,14 +12,15 @@ package org.eclipse.texlipse.editor;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jface.text.link.LinkedModeModel;
 import org.eclipse.jface.text.link.LinkedModeUI;
-import org.eclipse.jface.text.link.LinkedPosition;
-import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.jface.text.link.LinkedModeUI.ExitFlags;
 import org.eclipse.jface.text.link.LinkedModeUI.IExitPolicy;
+import org.eclipse.jface.text.link.LinkedPosition;
+import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.graphics.Image;
@@ -61,46 +62,85 @@ public class TexCompletionProposal implements ICompletionProposal {
     /* (non-Javadoc)
      * @see org.eclipse.jface.text.contentassist.ICompletionProposal#apply(org.eclipse.jface.text.IDocument)
      */
-    public void apply(IDocument document) {
-        try {
-            if (fentry.arguments > 0) {
-                StringBuffer displayKey = new StringBuffer(fentry.key);
-                for (int j=0; j < fentry.arguments; j++)
-                    displayKey.append("{}");
-                document.replace(fReplacementOffset, fReplacementLength, displayKey.toString());
-                if (TexlipsePlugin.getDefault().getPreferenceStore()
-                        .getBoolean(TexlipseProperties.SMART_PARENS)){
-                    LinkedModeModel model= new LinkedModeModel();
-                    for (int j=0; j < fentry.arguments; j++){
-                        int newOffset = fReplacementOffset + fentry.key.length() + j*2 + 1;
-                        LinkedPositionGroup group = new LinkedPositionGroup();
-                        group.addPosition(new LinkedPosition(document, newOffset, 0, LinkedPositionGroup.NO_STOP));
-                        model.addGroup(group);
-                    }
-                    model.forceInstall();
-                    LinkedModeUI ui = new EditorLinkedModeUI(model, fviewer);
-                    ui.setSimpleMode(false);
-                    ui.setExitPolicy(new ExitPolicy('}', fviewer));
-                    ui.setExitPosition(fviewer, fReplacementOffset + displayKey.length(),
-                            0, Integer.MAX_VALUE);
-                    ui.setCyclingMode(LinkedModeUI.CYCLE_NEVER);
-                    ui.enter();
-                }
-            } else {
-                document.replace(fReplacementOffset, fReplacementLength, fentry.key);
-            }
-        } catch (BadLocationException x) {
-        }
-    }
+	public void apply(IDocument document)
+	{
+		try
+		{
+			if (fentry.arguments > 0)
+			{
+				StringBuffer displayKey = new StringBuffer(fentry.key);
+				int length = fentry.key.length();
+				/*for (int j = 0; j < fentry.arguments; j++)
+					displayKey.append("{}");*/
+				//TODO smart insert
+				IRegion region = document.getLineInformationOfOffset(fReplacementOffset);
+				/** the content of current line before inserting <code>c.text</code> */
+				String currentLine = document.get(region.getOffset(), region.getLength());
+				
+				//Remove the backslash of the command
+				if (currentLine.startsWith("\\"))
+					currentLine = currentLine.substring(1);
+				int fromIndex = 0;
+				for (int i = 0; i < length; i++)
+				{
+					if (currentLine.charAt(i) == fentry.key.charAt(i))
+						continue;
+					else
+					{
+						fromIndex = i;
+						document.replace(fReplacementOffset + i, fReplacementLength - i, fentry.key.substring(i));
+					}
+				}
+					
+				//Insert brackets here
+				//TODO arguments including optional arguments
+				int lineLength = currentLine.length();
+				int arguments = fentry.arguments;
+				for (int i = fromIndex; i < lineLength; i++)
+				{
+					if (currentLine.charAt(i) == '}')
+					{
+						arguments--;
+					}
+				}
+				for (int i = 0; i < arguments; i++)
+				{
+					document.replace(fReplacementOffset + fReplacementLength + i + i, 0, "{}");
+				}
+				
+				if (TexlipsePlugin.getDefault().getPreferenceStore().getBoolean(TexlipseProperties.SMART_PARENS))
+				{
+					LinkedModeModel model = new LinkedModeModel();
+					for (int j = 0; j < fentry.arguments; j++)
+					{
+						int newOffset = fReplacementOffset + fentry.key.length() + j * 2 + 1;
+						LinkedPositionGroup group = new LinkedPositionGroup();
+						group.addPosition(new LinkedPosition(document, newOffset, 0, LinkedPositionGroup.NO_STOP));
+						model.addGroup(group);
+					}
+					model.forceInstall();
+					LinkedModeUI ui = new EditorLinkedModeUI(model, fviewer);
+					ui.setSimpleMode(false);
+					ui.setExitPolicy(new ExitPolicy('}', fviewer));
+					ui.setExitPosition(fviewer, fReplacementOffset + displayKey.length(), 0, Integer.MAX_VALUE);
+					ui.setCyclingMode(LinkedModeUI.CYCLE_NEVER);
+					ui.enter();
+				}
+			} 
+			else
+				document.replace(fReplacementOffset, fReplacementLength, fentry.key);
+		} catch (BadLocationException x) {}
+	}
     
     /* (non-Javadoc)
      * @see org.eclipse.jface.text.contentassist.ICompletionProposal#getSelection(org.eclipse.jface.text.IDocument)
      */
-    public Point getSelection(IDocument document) {
-        if (fentry.arguments > 0) 
-            return new Point(fReplacementOffset + fentry.key.length()+1, 0);
-        return new Point(fReplacementOffset + fentry.key.length(), 0);
-    }
+	public Point getSelection(IDocument document)
+	{
+		if (fentry.arguments > 0)
+			return new Point(fReplacementOffset + fentry.key.length() + 1, 0);
+		return new Point(fReplacementOffset + fentry.key.length(), 0);
+	}
     
     /* (non-Javadoc)
      * @see org.eclipse.jface.text.contentassist.ICompletionProposal#getAdditionalProposalInfo()

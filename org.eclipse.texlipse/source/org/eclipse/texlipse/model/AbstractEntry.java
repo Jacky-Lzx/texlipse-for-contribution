@@ -21,7 +21,7 @@ import org.eclipse.jface.text.Position;
  * 
  * @author Oskar Ojala
  */
-public abstract class AbstractEntry implements Comparable {
+public abstract class AbstractEntry implements Comparable<Object> {
 
     /**
      * The key (i.e. the name) of the entry

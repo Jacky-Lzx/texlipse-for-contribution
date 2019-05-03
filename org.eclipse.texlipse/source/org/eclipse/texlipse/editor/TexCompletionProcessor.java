@@ -133,7 +133,8 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 				{
 					String replacement = seqStart.substring(1);
 					proposals = computeCommandCompletions(offset, replacement.length(), replacement);
-				} else if (seqStart.startsWith("{"))
+				} 
+				else if (seqStart.startsWith("{"))
 				{
 					proposals = resolveReferenceCompletions(lineStart, offset, seqStart);
 					if (proposals == null)
@@ -151,7 +152,8 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 						}
 
 					}
-				} else if (seqStart.length() > 0)
+				} 
+				else if (seqStart.length() > 0)
 				{
 					// ---------------------spell-checking-code-starts----------------------
 					// spell checking can't help with words not starting with a
@@ -174,15 +176,15 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 				System.arraycopy(templateProposals, 0, value, 0, templateProposals.length);
 				System.arraycopy(proposals, 0, value, templateProposals.length, proposals.length);
 				return value;
-			} else
+			} 
+			else
 			{
 				if (templateProposals.length == 0)
-				{
 					model.setStatusLineErrorMessage(" No completions available.");
-				}
 				return templateProposals;
 			}
-		} catch (BadLocationException e)
+		} 
+		catch (BadLocationException e)
 		{
 			TexlipsePlugin.log("TexCompletionProcessor: ", e);
 			return new ICompletionProposal[0];
@@ -448,17 +450,15 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 	/**
 	 * Computes and returns command-proposals
 	 * 
-	 * @param offset
-	 *            Current cursor offset
-	 * @param replacementLength
-	 *            The length of the string to be replaced
-	 * @param prefix
-	 *            The already typed prefix of the entry to assist with
+	 * @param offset            Current cursor offset
+	 * @param replacementLength The length of the string to be replaced
+	 * @param prefix            The already typed prefix of the entry to assist with
 	 * @return An array of completion proposals to use directly or null
 	 */
 	private ICompletionProposal[] computeCommandCompletions(int offset, int replacementLength, String prefix)
 	{
 		List<TexCommandEntry> comEntries = refManager.getCompletionsCom(prefix, TexCommandEntry.NORMAL_CONTEXT);
+		
 		if (comEntries == null)
 			return null;
 
@@ -467,9 +467,7 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 		{
 			String endString = environmentEnd(fviewer.getDocument().get(), offset);
 			if (endString != null)
-			{
 				cp = new CompletionProposal(endString, offset - replacementLength, replacementLength, endString.length());
-			}
 		}
 
 		int start;
@@ -478,7 +476,8 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 		{
 			result = new ICompletionProposal[comEntries.size()];
 			start = 0;
-		} else
+		} 
+		else
 		{
 			result = new ICompletionProposal[comEntries.size() + 1];
 			result[0] = cp;
