@@ -58,7 +58,7 @@ import org.eclipse.ui.progress.WorkbenchJob;
 
 /**
  * LaTeX document model. Handles parsing of the document and updating
- * the outline, folding and content assist datastructures.
+ * the outline, folding and content assist data structures.
  * 
  * @author Taavi Hupponen
  * @author Oskar Ojala

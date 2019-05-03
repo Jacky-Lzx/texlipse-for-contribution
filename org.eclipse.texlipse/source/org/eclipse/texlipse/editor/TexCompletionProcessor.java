@@ -47,15 +47,14 @@ import org.eclipse.ui.texteditor.HippieProposalProcessor;
 /**
  * Implements a LaTeX-content assistant for displaying a list of completions for
  * \ref, \pageref and \cite. For BibTeX-completions (\cite), the details of the
- * selected entry are displayed. The actualy completions are fetched from the
+ * selected entry are displayed. The actual completions are fetched from the
  * ReferenceManager, owned by the TexDocumentModel of the current document.
  * 
  * @author Oskar Ojala
  */
 public class TexCompletionProcessor implements IContentAssistProcessor {
 
-	private TexTemplateCompletion templatesCompletion = new TexTemplateCompletion(
-			TexContextType.TEX_CONTEXT_TYPE);
+	private TexTemplateCompletion templatesCompletion = new TexTemplateCompletion(TexContextType.TEX_CONTEXT_TYPE);
 
 	private TexDocumentModel model;
 	private ReferenceManager refManager;
@@ -67,11 +66,10 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 	private final HippieProposalProcessor hippie = new HippieProposalProcessor();
 
 	/**
-	 * A regexp pattern for resolving the command used for referencing (in the
-	 * 1st group)
+	 * A regexp pattern for resolving the command used for referencing (in the 1st
+	 * group)
 	 */
-	private static final Pattern comCapt = Pattern
-			.compile("([a-zA-Z]+)\\s*(?:\\[.*?\\]\\s*)?");
+	private static final Pattern comCapt = Pattern.compile("([a-zA-Z]+)\\s*(?:\\[.*?\\]\\s*)?");
 
 	/**
 	 * Receives the document model from the editor (one model/editor view) and
@@ -85,14 +83,14 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 		this.fviewer = viewer;
 	}
 
-	/*
+	/**
 	 * (non-Javadoc)
 	 * 
-	 * @seeorg.eclipse.jface.text.contentassist.IContentAssistProcessor#
-	 * computeCompletionProposals(org.eclipse.jface.text.ITextViewer, int)
+	 * @see org.eclipse.jface.text.contentassist.IContentAssistProcessor#
+	 *      computeCompletionProposals(org.eclipse.jface.text.ITextViewer, int)
 	 */
-	public ICompletionProposal[] computeCompletionProposals(ITextViewer viewer,
-			int offset) {
+	public ICompletionProposal[] computeCompletionProposals(ITextViewer viewer, int offset)
+	{
 		if (refManager == null)
 			this.refManager = this.model.getRefMana();
 
@@ -100,96 +98,101 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 		IDocument doc = viewer.getDocument();
 
 		// try to see if a text area is selected
+		/**
+		 * Point:
+		 * 
+		 * @parameter x: start index of selected range.
+		 * @parameter y: length of selected range.
+		 */
 		Point selectedRange = viewer.getSelectedRange();
-		if (selectedRange.y > 0) {
-			try {
+		if (selectedRange.y > 0)
+		{
+			try
+			{
 				String text = doc.get(selectedRange.x, selectedRange.y);
 				return computeStyleProposals(text, selectedRange);
-			} catch (BadLocationException e) {
-			}
+			} 
+			catch (BadLocationException e) {}
 		}
 
 		// if not, proceed to templates and "regular" completions
-		try {
-			int lineStartOffset = doc
-					.getLineOffset(doc.getLineOfOffset(offset));
-			String lineStart = doc.get(lineStartOffset, offset
-					- lineStartOffset);
+		try
+		{
+			int lineStartOffset = doc.getLineOffset(doc.getLineOfOffset(offset));
+			String lineStart = doc.get(lineStartOffset, offset - lineStartOffset);
 
 			ICompletionProposal[] proposals = null;
-			ICompletionProposal[] templateProposals = computeTemplateCompletions(
-					offset, lineStart, viewer);
+			ICompletionProposal[] templateProposals = computeTemplateCompletions(offset, lineStart, viewer);
 
-			if (!(lineStart.length() >= 2 && lineStart.endsWith("\\\\"))
-					&& (lineStart.length() > 0)) {
-
-				int seqStartIdx = resolveCompletionStart(lineStart, lineStart
-						.length() - 1);
+			if (!(lineStart.length() >= 2 && lineStart.endsWith("\\\\")) && (lineStart.length() > 0))
+			{
+				int seqStartIdx = resolveCompletionStart(lineStart, lineStart.length() - 1);
 				String seqStart = lineStart.substring(seqStartIdx);
 
-				if (seqStart.startsWith("\\")) {
+				if (seqStart.startsWith("\\"))
+				{
 					String replacement = seqStart.substring(1);
-					proposals = computeCommandCompletions(offset, replacement
-							.length(), replacement);
-				} else if (seqStart.startsWith("{")) {
-					proposals = resolveReferenceCompletions(lineStart, offset,
-							seqStart);
-					if (proposals == null) {
+					proposals = computeCommandCompletions(offset, replacement.length(), replacement);
+				} else if (seqStart.startsWith("{"))
+				{
+					proposals = resolveReferenceCompletions(lineStart, offset, seqStart);
+					if (proposals == null)
+					{
 						// Maybe there is a wrong spelled word here (e.g.
 						// \section{Wroang ...})
-						proposals = SpellChecker.getSpellingProposal(offset,
-								fviewer);
-						if (proposals != null && proposals.length > 0) {
+						proposals = SpellChecker.getSpellingProposal(offset, fviewer);
+						if (proposals != null && proposals.length > 0)
+						{
 							return proposals;
-						} else {
+						} else
+						{
 							// Hippie!!
-							proposals = hippie.computeCompletionProposals(
-									fviewer, offset);
+							proposals = hippie.computeCompletionProposals(fviewer, offset);
 						}
 
 					}
-				} else if (seqStart.length() > 0) {
+				} else if (seqStart.length() > 0)
+				{
 					// ---------------------spell-checking-code-starts----------------------
 					// spell checking can't help with words not starting with a
 					// letter...
-					proposals = SpellChecker.getSpellingProposal(offset,
-							fviewer);
-					if (proposals != null && proposals.length > 0) {
+					proposals = SpellChecker.getSpellingProposal(offset, fviewer);
+					if (proposals != null && proposals.length > 0)
+					{
 						return proposals;
 					}
 					// if there is no spelling corrections, use the
 					// HippieProposal
-					proposals = hippie.computeCompletionProposals(fviewer,
-							offset);
+					proposals = hippie.computeCompletionProposals(fviewer, offset);
 				}
 			}
 
 			// Concatenate the lists if necessary
-			if (proposals != null) {
-				ICompletionProposal[] value = new ICompletionProposal[proposals.length
-						+ templateProposals.length];
-				System.arraycopy(templateProposals, 0, value, 0,
-						templateProposals.length);
-				System.arraycopy(proposals, 0, value, templateProposals.length,
-						proposals.length);
+			if (proposals != null)
+			{
+				ICompletionProposal[] value = new ICompletionProposal[proposals.length + templateProposals.length];
+				System.arraycopy(templateProposals, 0, value, 0, templateProposals.length);
+				System.arraycopy(proposals, 0, value, templateProposals.length, proposals.length);
 				return value;
-			} else {
-				if (templateProposals.length == 0) {
-					model
-							.setStatusLineErrorMessage(" No completions available.");
+			} else
+			{
+				if (templateProposals.length == 0)
+				{
+					model.setStatusLineErrorMessage(" No completions available.");
 				}
 				return templateProposals;
 			}
-		} catch (BadLocationException e) {
+		} catch (BadLocationException e)
+		{
 			TexlipsePlugin.log("TexCompletionProcessor: ", e);
 			return new ICompletionProposal[0];
 		}
 	}
 
-	/*
+	/**
 	 * (non-Javadoc)
 	 * 
-	 * @seeorg.eclipse.jface.text.contentassist.IContentAssistProcessor#
+	 * @see org.eclipse.jface.text.contentassist.IContentAssistProcessor#
 	 * computeContextInformation(org.eclipse.jface.text.ITextViewer, int)
 	 */
 	public IContextInformation[] computeContextInformation(ITextViewer viewer,
@@ -251,21 +254,22 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 	}
 
 	/**
-	 * Resolves the completion replacement string so that the activation
-	 * character is the first character following the returned offset.
+	 * Resolves the completion replacement string so that the activation character
+	 * is the first character following the returned offset.
 	 * 
-	 * @param doc
-	 *            The document
-	 * @param offset
-	 *            The offset from where to search backwards
-	 * @return The offset where the activation char is found or -1 if it was not
-	 *         found
+	 * @param str    The document
+	 * @param offset The offset from where to search backwards
+	 * @return The offset where the activation char is found or 0 if not found
+	 * 
 	 */
-	private int resolveCompletionStart(String doc, int offset) {
-		while (offset > 0) {
-			if (Character.isWhitespace(doc.charAt(offset))
-					|| doc.charAt(offset) == '}' || doc.charAt(offset) == '{'
-					|| doc.charAt(offset) == '\\')
+	private int resolveCompletionStart(String str, int offset)
+	{
+		while (offset > 0)
+		{
+			if (Character.isWhitespace(str.charAt(offset))
+					|| str.charAt(offset) == '}' 
+					|| str.charAt(offset) == '{' 
+					|| str.charAt(offset) == '\\')
 				break;
 			offset--;
 		}
@@ -452,38 +456,38 @@ public class TexCompletionProcessor implements IContentAssistProcessor {
 	 *            The already typed prefix of the entry to assist with
 	 * @return An array of completion proposals to use directly or null
 	 */
-	private ICompletionProposal[] computeCommandCompletions(int offset,
-			int replacementLength, String prefix) {
-		List<TexCommandEntry> comEntries = refManager.getCompletionsCom(prefix,
-				TexCommandEntry.NORMAL_CONTEXT);
+	private ICompletionProposal[] computeCommandCompletions(int offset, int replacementLength, String prefix)
+	{
+		List<TexCommandEntry> comEntries = refManager.getCompletionsCom(prefix, TexCommandEntry.NORMAL_CONTEXT);
 		if (comEntries == null)
 			return null;
 
 		CompletionProposal cp = null;
-		if ("\\".equals(prefix) || "end".startsWith(prefix)) {
-			String endString = environmentEnd(fviewer.getDocument().get(),
-					offset);
-			if (endString != null) {
-				cp = new CompletionProposal(endString, offset
-						- replacementLength, replacementLength, endString
-						.length());
+		if ("\\".equals(prefix) || "end".startsWith(prefix))
+		{
+			String endString = environmentEnd(fviewer.getDocument().get(), offset);
+			if (endString != null)
+			{
+				cp = new CompletionProposal(endString, offset - replacementLength, replacementLength, endString.length());
 			}
 		}
 
 		int start;
 		ICompletionProposal[] result;
-		if (cp == null) {
+		if (cp == null)
+		{
 			result = new ICompletionProposal[comEntries.size()];
 			start = 0;
-		} else {
+		} else
+		{
 			result = new ICompletionProposal[comEntries.size() + 1];
 			result[0] = cp;
 			start = 1;
 		}
 
-		for (int i = 0; i < comEntries.size(); i++) {
-			result[i + start] = new TexCompletionProposal(comEntries.get(i),
-					offset - replacementLength, replacementLength, fviewer);
+		for (int i = 0; i < comEntries.size(); i++)
+		{
+			result[i + start] = new TexCompletionProposal(comEntries.get(i), offset - replacementLength, replacementLength, fviewer);
 		}
 		return result;
 	}

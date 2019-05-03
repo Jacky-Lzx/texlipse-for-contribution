@@ -119,7 +119,7 @@ public class TexProjectParser {
     /**
      * Parses a file that has been previously found with 
      * <code>findIFile</code>. Note that if the find was not done or
-     * it completed unsuccessfully, then the behaviour of this method
+     * it completed unsuccessfully, then the behavior of this method
      * is undefined.
      * 
      * @return Outline tree or null if parsing was unsuccessful.

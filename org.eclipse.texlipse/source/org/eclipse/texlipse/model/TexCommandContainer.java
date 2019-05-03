@@ -499,7 +499,7 @@ public class TexCommandContainer {
             Iterator<List<TexCommandEntry>> iter = commandHash.values().iterator();
             allRefs = iter.next();
         }
-        //copy all commands and change the context to activate them also in mathmode
+        //copy all commands and change the context to activate them also in math mode
         List<TexCommandEntry> mathRefs = new ArrayList<TexCommandEntry> (allRefs.size());
         for (TexCommandEntry c : allRefs) {
             TexCommandEntry element = new TexCommandEntry(c);
