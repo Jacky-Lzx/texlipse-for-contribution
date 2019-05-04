@@ -54,75 +54,91 @@ public class TexCompletionProposal implements ICompletionProposal {
      */
     public TexCompletionProposal(TexCommandEntry entry, int replacementOffset, int replacementLength, ISourceViewer viewer) {
         fentry = entry;
-        fReplacementLength = replacementLength;
         fReplacementOffset = replacementOffset;
+        fReplacementLength = replacementLength;
         fviewer = viewer;
     }
     
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.text.contentassist.ICompletionProposal#apply(org.eclipse.jface.text.IDocument)
-     */
+    /**
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.eclipse.jface.text.contentassist.ICompletionProposal#apply(org.eclipse.
+	 * jface.text.IDocument)
+	 */
 	public void apply(IDocument document)
 	{
 		try
 		{
+			/**
+			 * TODO How to change the offset of cursor?
+			 */
 			if (fentry.arguments > 0)
 			{
-				StringBuffer displayKey = new StringBuffer(fentry.key);
-				int length = fentry.key.length();
-				/*for (int j = 0; j < fentry.arguments; j++)
-					displayKey.append("{}");*/
-				//TODO smart insert
 				IRegion region = document.getLineInformationOfOffset(fReplacementOffset);
 				/** the content of current line before inserting <code>c.text</code> */
-				String currentLine = document.get(region.getOffset(), region.getLength());
+				String currentLineFromInsert = document.get(region.getOffset(), region.getLength());
+				currentLineFromInsert = currentLineFromInsert.substring(fReplacementOffset - region.getOffset());
 				
 				//Remove the backslash of the command
-				if (currentLine.startsWith("\\"))
-					currentLine = currentLine.substring(1);
-				int fromIndex = 0;
-				for (int i = 0; i < length; i++)
+//				int length = currentLine.substring(currentLine.indexOf("{")).length();
+				int length = fentry.key.length();
+				int fromIndex = (length < currentLineFromInsert.length() ? length : currentLineFromInsert.length());
+				//the <code>fromIndex</code> here is just used to avoid unnecessary calculation
+				for (int i = 0; i < fromIndex; i++)
 				{
-					if (currentLine.charAt(i) == fentry.key.charAt(i))
-						continue;
-					else
+					if (currentLineFromInsert.charAt(i) != fentry.key.charAt(i))
 					{
 						fromIndex = i;
-						document.replace(fReplacementOffset + i, fReplacementLength - i, fentry.key.substring(i));
+						break;
 					}
 				}
+				document.replace(fReplacementOffset + fromIndex, /*length - fromIndex*/0, fentry.key.substring(fromIndex));
 					
 				//Insert brackets here
-				//TODO arguments including optional arguments
-				int lineLength = currentLine.length();
-				int arguments = fentry.arguments;
+				int lineLength = currentLineFromInsert.length();
+				int argumentNumber = fentry.arguments;
+				int[] arguments = new int[argumentNumber];
+				int[] argumentsIndex = new int[argumentNumber];
+				int index = 0;
+				int fromTemp = 0;
+				int insertIndex = length;
 				for (int i = fromIndex; i < lineLength; i++)
 				{
-					if (currentLine.charAt(i) == '}')
+					if (currentLineFromInsert.charAt(i) == '{')
 					{
-						arguments--;
+						argumentsIndex[index] = i + 1;
+						fromTemp = i;
+					}
+					else if (currentLineFromInsert.charAt(i) == '}')
+					{
+						argumentNumber--;
+						insertIndex = i + 1;
+						arguments[index] = i - fromTemp - 1;
+						index++;
 					}
 				}
-				for (int i = 0; i < arguments; i++)
+				for (int i = 0; i < argumentNumber; i++)
 				{
-					document.replace(fReplacementOffset + fReplacementLength + i + i, 0, "{}");
+					document.replace(fReplacementOffset + insertIndex + i + i, 0, "{}");
+					argumentsIndex[index] = insertIndex + i + i + 1;
 				}
 				
 				if (TexlipsePlugin.getDefault().getPreferenceStore().getBoolean(TexlipseProperties.SMART_PARENS))
 				{
 					LinkedModeModel model = new LinkedModeModel();
+					
 					for (int j = 0; j < fentry.arguments; j++)
 					{
-						int newOffset = fReplacementOffset + fentry.key.length() + j * 2 + 1;
 						LinkedPositionGroup group = new LinkedPositionGroup();
-						group.addPosition(new LinkedPosition(document, newOffset, 0, LinkedPositionGroup.NO_STOP));
+						group.addPosition(new LinkedPosition(document, fReplacementOffset + argumentsIndex[j], arguments[j], LinkedPositionGroup.NO_STOP));
 						model.addGroup(group);
 					}
 					model.forceInstall();
 					LinkedModeUI ui = new EditorLinkedModeUI(model, fviewer);
 					ui.setSimpleMode(false);
-					ui.setExitPolicy(new ExitPolicy('}', fviewer));
-					ui.setExitPosition(fviewer, fReplacementOffset + displayKey.length(), 0, Integer.MAX_VALUE);
+//					ui.setExitPolicy(new ExitPolicy('}', fviewer));
+					ui.setExitPosition(fviewer, fReplacementOffset + insertIndex + 2 * argumentNumber, 0, Integer.MAX_VALUE);
 					ui.setCyclingMode(LinkedModeUI.CYCLE_NEVER);
 					ui.enter();
 				}
