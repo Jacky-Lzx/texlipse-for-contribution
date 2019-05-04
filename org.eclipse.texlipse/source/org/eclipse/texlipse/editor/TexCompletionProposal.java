@@ -76,18 +76,17 @@ public class TexCompletionProposal implements ICompletionProposal {
 			if (fentry.arguments > 0)
 			{
 				IRegion region = document.getLineInformationOfOffset(fReplacementOffset);
-				/** the content of current line before inserting <code>c.text</code> */
-				String currentLineFromInsert = document.get(region.getOffset(), region.getLength());
-				currentLineFromInsert = currentLineFromInsert.substring(fReplacementOffset - region.getOffset());
+				/** the content of existing command ("\\" exclusive) */
+				String existCommand = document.get(region.getOffset(), region.getLength());
+				existCommand = existCommand.substring(fReplacementOffset - region.getOffset());
 				
-				//Remove the backslash of the command
-//				int length = currentLine.substring(currentLine.indexOf("{")).length();
 				int length = fentry.key.length();
-				int fromIndex = (length < currentLineFromInsert.length() ? length : currentLineFromInsert.length());
+				int commandLength = existCommand.length();
+				int fromIndex = (length < commandLength ? length : commandLength);
 				//the <code>fromIndex</code> here is just used to avoid unnecessary calculation
 				for (int i = 0; i < fromIndex; i++)
 				{
-					if (currentLineFromInsert.charAt(i) != fentry.key.charAt(i))
+					if (existCommand.charAt(i) != fentry.key.charAt(i))
 					{
 						fromIndex = i;
 						break;
@@ -96,21 +95,20 @@ public class TexCompletionProposal implements ICompletionProposal {
 				document.replace(fReplacementOffset + fromIndex, /*length - fromIndex*/0, fentry.key.substring(fromIndex));
 					
 				//Insert brackets here
-				int lineLength = currentLineFromInsert.length();
 				int argumentNumber = fentry.arguments;
 				int[] arguments = new int[argumentNumber];
 				int[] argumentsIndex = new int[argumentNumber];
 				int index = 0;
 				int fromTemp = 0;
 				int insertIndex = length;
-				for (int i = fromIndex; i < lineLength; i++)
+				for (int i = fromIndex; i < commandLength; i++)
 				{
-					if (currentLineFromInsert.charAt(i) == '{')
+					if (existCommand.charAt(i) == '{')
 					{
 						argumentsIndex[index] = i + 1;
 						fromTemp = i;
 					}
-					else if (currentLineFromInsert.charAt(i) == '}')
+					else if (existCommand.charAt(i) == '}')
 					{
 						argumentNumber--;
 						insertIndex = i + 1;
@@ -118,10 +116,12 @@ public class TexCompletionProposal implements ICompletionProposal {
 						index++;
 					}
 				}
+				int temp;
 				for (int i = 0; i < argumentNumber; i++)
 				{
-					document.replace(fReplacementOffset + insertIndex + i + i, 0, "{}");
-					argumentsIndex[index] = insertIndex + i + i + 1;
+					temp = insertIndex + i + i;
+					document.replace(fReplacementOffset + temp, 0, "{}");
+					argumentsIndex[index] = temp + 1;
 				}
 				
 				if (TexlipsePlugin.getDefault().getPreferenceStore().getBoolean(TexlipseProperties.SMART_PARENS))
