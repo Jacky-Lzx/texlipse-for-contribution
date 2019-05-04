@@ -40,7 +40,7 @@ public class TexCodeFolder {
 
     private boolean firstRun;
 
-    private HashSet environments;
+    private HashSet<String> environments;
     private boolean preamble;
     private boolean part;
     private boolean chapter;
@@ -64,7 +64,7 @@ public class TexCodeFolder {
      * 
      * @param outline The document outline data structure containing the document positions
      */
-    public void update(ArrayList outline) {
+    public void update(ArrayList<OutlineNode> outline) {
         model = (ProjectionAnnotationModel)editor.getAdapter(ProjectionAnnotationModel.class);
 
         if (model != null) {
@@ -77,10 +77,10 @@ public class TexCodeFolder {
      * 
      * @param outline The document outline data structure containing the document positions
      */
-    private void addMarks(ArrayList outline) {
+    private void addMarks(ArrayList<OutlineNode> outline) {
         if (firstRun) {
             String[] envs = TexlipsePlugin.getPreferenceArray(TexlipseProperties.CODE_FOLDING_ENVS);
-            environments = new HashSet(envs.length + 1);
+            environments = new HashSet<String>(envs.length + 1);
             for (int i = 0; i < envs.length; i++)
                 environments.add(envs[i]);
 
