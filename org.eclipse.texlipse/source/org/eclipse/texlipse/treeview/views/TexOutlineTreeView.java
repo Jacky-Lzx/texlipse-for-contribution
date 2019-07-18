@@ -37,9 +37,9 @@ import org.eclipse.ui.part.ViewPart;
  *
  * @author Boris von Loesch
  */
-public class TexOutlineTreeView extends ViewPart implements  
-	ISelectionChangedListener, IPartListener { 
-    
+public class TexOutlineTreeView extends ViewPart implements ISelectionChangedListener, IPartListener
+{
+
     private TexOutlinePage outline;
 
     /**

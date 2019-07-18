@@ -17,8 +17,6 @@ import org.eclipse.jface.text.TextAttribute;
 import org.eclipse.jface.text.rules.EndOfLineRule;
 import org.eclipse.jface.text.rules.IRule;
 import org.eclipse.jface.text.rules.IToken;
-import org.eclipse.jface.text.rules.MultiLineRule;
-import org.eclipse.jface.text.rules.NumberRule;
 import org.eclipse.jface.text.rules.RuleBasedScanner;
 import org.eclipse.jface.text.rules.Token;
 import org.eclipse.jface.text.rules.WhitespaceRule;
@@ -41,26 +39,20 @@ public class TexArgScanner extends RuleBasedScanner {
      * A default constructor.
      * @param manager
      */
-    public TexArgScanner(ColorManager manager) {
-        IToken commentToken = new Token(new TextAttribute(manager
-                .getColor(ColorManager.COMMENT),
-                null,
-                manager.getStyle(ColorManager.COMMENT_STYLE)));
+	public TexArgScanner(ColorManager manager)
+	{
+		IToken commentToken = new Token(new TextAttribute(manager.getColor(ColorManager.COMMENT), null, manager.getStyle(ColorManager.COMMENT_STYLE)));
 
-        //Commands are colored in argument color with command styles 
-        IToken commandToken = new Token(
-                new TextAttribute(
-                        manager.getColor(ColorManager.CURLY_BRACKETS),
-                        null,
-                        manager.getStyle(ColorManager.COMMAND_STYLE)));
+		// Commands are colored in argument color with command styles
+		IToken commandToken = new Token(new TextAttribute(manager.getColor(ColorManager.CURLY_BRACKETS), null, manager.getStyle(ColorManager.COMMAND_STYLE)));
 
-        List<IRule> rules = new ArrayList<IRule>();
-        rules.add(new EndOfLineRule("%", commentToken, '\\'));
-        rules.add(new WhitespaceRule(new WhitespaceDetector()));
-        rules.add(new WordRule(new TexWord(), commandToken));
+		List<IRule> rules = new ArrayList<IRule>();
+		rules.add(new EndOfLineRule("%", commentToken, '\\'));
+		rules.add(new WhitespaceRule(new WhitespaceDetector()));
+		rules.add(new WordRule(new TexWord(), commandToken));
 
-        IRule[] result = new IRule[rules.size()];
-        rules.toArray(result);
-        setRules(result);
-    }
+		IRule[] result = new IRule[rules.size()];
+		rules.toArray(result);
+		setRules(result);
+	}
 }

@@ -26,10 +26,9 @@ import org.eclipse.jface.text.source.projection.ProjectionViewer;
 import org.eclipse.jface.viewers.IPostSelectionProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.swt.custom.VerifyKeyListener;
-import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.texlipse.TexlipsePlugin;
+import org.eclipse.texlipse.model.OutlineNode;
 import org.eclipse.texlipse.model.TexDocumentModel;
 import org.eclipse.texlipse.outline.TexOutlinePage;
 import org.eclipse.texlipse.properties.TexlipseProperties;
@@ -237,7 +236,7 @@ public class TexEditor extends TextEditor {
      * @param rootNodes The document tree that correspond to folds
      * @param monitor A progress monitor for the job doing the update
      */
-    public void updateCodeFolder(ArrayList rootNodes, IProgressMonitor monitor) {
+    public void updateCodeFolder(ArrayList<OutlineNode> rootNodes, IProgressMonitor monitor) {
         this.folder.update(rootNodes);        
     }
 

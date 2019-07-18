@@ -391,17 +391,19 @@ public class TexOutlinePage extends ContentOutlinePage {
      * Creates a new action to hide a certain nodeType
      */
     private IAction createHideAction(String desc, final int nodeType, ImageDescriptor img) {
-        IAction action = new Action(desc, IAction.AS_CHECK_BOX) {
-            public void run() {
-                boolean oldState = filter.isTypeVisible(nodeType);
-                filter.toggleType(nodeType, !oldState);
-                TreeViewer viewer = getTreeViewer();
-                if (oldState == false) {
-                    revealNodes(nodeType);
-                }
-                viewer.refresh();
-            }
-        };
+		IAction action = new Action(desc, IAction.AS_CHECK_BOX) {
+			public void run()
+			{
+				boolean oldState = filter.isTypeVisible(nodeType);
+				filter.toggleType(nodeType, !oldState);
+				TreeViewer viewer = getTreeViewer();
+				if (oldState == false)
+				{
+					revealNodes(nodeType);
+				}
+				viewer.refresh();
+			}
+		};
         action.setToolTipText(desc);
         action.setImageDescriptor(img);
         return action;
